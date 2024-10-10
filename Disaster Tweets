@@ -1,0 +1,697 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "5843aa8f",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:36.002651Z",
+     "iopub.status.busy": "2024-10-10T17:48:36.002135Z",
+     "iopub.status.idle": "2024-10-10T17:48:36.911507Z",
+     "shell.execute_reply": "2024-10-10T17:48:36.910360Z"
+    },
+    "papermill": {
+     "duration": 0.918434,
+     "end_time": "2024-10-10T17:48:36.914293",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:35.995859",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "/kaggle/input/natural-language-processing-with-disaster-tweets/sample_submission.csv\n",
+      "/kaggle/input/natural-language-processing-with-disaster-tweets/train.csv\n",
+      "/kaggle/input/natural-language-processing-with-disaster-tweets/test.csv\n"
+     ]
+    }
+   ],
+   "source": [
+    "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+    "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+    "# For example, here's several helpful packages to load\n",
+    "\n",
+    "import numpy as np # linear algebra\n",
+    "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+    "\n",
+    "# Input data files are available in the read-only \"../input/\" directory\n",
+    "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+    "\n",
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))\n",
+    "\n",
+    "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\" \n",
+    "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "3992bbbc",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:36.923731Z",
+     "iopub.status.busy": "2024-10-10T17:48:36.923149Z",
+     "iopub.status.idle": "2024-10-10T17:48:36.988397Z",
+     "shell.execute_reply": "2024-10-10T17:48:36.987269Z"
+    },
+    "papermill": {
+     "duration": 0.072785,
+     "end_time": "2024-10-10T17:48:36.991094",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:36.918309",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>keyword</th>\n",
+       "      <th>location</th>\n",
+       "      <th>text</th>\n",
+       "      <th>target</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Our Deeds are the Reason of this #earthquake M...</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>4</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Forest fire near La Ronge Sask. Canada</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>5</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>All residents asked to 'shelter in place' are ...</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>6</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>13,000 people receive #wildfires evacuation or...</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>7</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Just got sent this photo from Ruby #Alaska as ...</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   id keyword location                                               text  \\\n",
+       "0   1     NaN      NaN  Our Deeds are the Reason of this #earthquake M...   \n",
+       "1   4     NaN      NaN             Forest fire near La Ronge Sask. Canada   \n",
+       "2   5     NaN      NaN  All residents asked to 'shelter in place' are ...   \n",
+       "3   6     NaN      NaN  13,000 people receive #wildfires evacuation or...   \n",
+       "4   7     NaN      NaN  Just got sent this photo from Ruby #Alaska as ...   \n",
+       "\n",
+       "   target  \n",
+       "0       1  \n",
+       "1       1  \n",
+       "2       1  \n",
+       "3       1  \n",
+       "4       1  "
+      ]
+     },
+     "execution_count": 2,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_train = pd.read_csv('/kaggle/input/natural-language-processing-with-disaster-tweets/train.csv')\n",
+    "df_train.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "f1075e2d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.000675Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.000225Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.035775Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.034341Z"
+    },
+    "papermill": {
+     "duration": 0.043713,
+     "end_time": "2024-10-10T17:48:37.038814",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:36.995101",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>keyword</th>\n",
+       "      <th>location</th>\n",
+       "      <th>text</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Just happened a terrible car crash</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>2</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Heard about #earthquake is different cities, s...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>3</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>there is a forest fire at spot pond, geese are...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>9</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Apocalypse lighting. #Spokane #wildfires</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>11</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Typhoon Soudelor kills 28 in China and Taiwan</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   id keyword location                                               text\n",
+       "0   0     NaN      NaN                 Just happened a terrible car crash\n",
+       "1   2     NaN      NaN  Heard about #earthquake is different cities, s...\n",
+       "2   3     NaN      NaN  there is a forest fire at spot pond, geese are...\n",
+       "3   9     NaN      NaN           Apocalypse lighting. #Spokane #wildfires\n",
+       "4  11     NaN      NaN      Typhoon Soudelor kills 28 in China and Taiwan"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_test = pd.read_csv('/kaggle/input/natural-language-processing-with-disaster-tweets/test.csv')\n",
+    "df_test.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "9c75a8c7",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.048901Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.048480Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.062061Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.060899Z"
+    },
+    "papermill": {
+     "duration": 0.021553,
+     "end_time": "2024-10-10T17:48:37.064583",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.043030",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "id             0\n",
+       "keyword       61\n",
+       "location    2533\n",
+       "text           0\n",
+       "target         0\n",
+       "dtype: int64"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_train.isnull().sum()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "49d14aa6",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.075145Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.074660Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.083393Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.082101Z"
+    },
+    "papermill": {
+     "duration": 0.016881,
+     "end_time": "2024-10-10T17:48:37.085832",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.068951",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(7613, 5)"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "d3067617",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.096706Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.095841Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.121412Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.120323Z"
+    },
+    "papermill": {
+     "duration": 0.033765,
+     "end_time": "2024-10-10T17:48:37.123990",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.090225",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 7613 entries, 0 to 7612\n",
+      "Data columns (total 5 columns):\n",
+      " #   Column    Non-Null Count  Dtype \n",
+      "---  ------    --------------  ----- \n",
+      " 0   id        7613 non-null   int64 \n",
+      " 1   keyword   7552 non-null   object\n",
+      " 2   location  5080 non-null   object\n",
+      " 3   text      7613 non-null   object\n",
+      " 4   target    7613 non-null   int64 \n",
+      "dtypes: int64(2), object(3)\n",
+      "memory usage: 297.5+ KB\n"
+     ]
+    }
+   ],
+   "source": [
+    "df_train.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "ba21b2b5",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.135552Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.134568Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.172394Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.171234Z"
+    },
+    "papermill": {
+     "duration": 0.046318,
+     "end_time": "2024-10-10T17:48:37.174888",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.128570",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>keyword</th>\n",
+       "      <th>location</th>\n",
+       "      <th>text</th>\n",
+       "      <th>target</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>count</th>\n",
+       "      <td>7613.000000</td>\n",
+       "      <td>7552</td>\n",
+       "      <td>5080</td>\n",
+       "      <td>7613</td>\n",
+       "      <td>7613.00000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>unique</th>\n",
+       "      <td>NaN</td>\n",
+       "      <td>221</td>\n",
+       "      <td>3341</td>\n",
+       "      <td>7503</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>top</th>\n",
+       "      <td>NaN</td>\n",
+       "      <td>fatalities</td>\n",
+       "      <td>USA</td>\n",
+       "      <td>11-Year-Old Boy Charged With Manslaughter of T...</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>freq</th>\n",
+       "      <td>NaN</td>\n",
+       "      <td>45</td>\n",
+       "      <td>104</td>\n",
+       "      <td>10</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>mean</th>\n",
+       "      <td>5441.934848</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>0.42966</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>std</th>\n",
+       "      <td>3137.116090</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>0.49506</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>min</th>\n",
+       "      <td>1.000000</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>0.00000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>25%</th>\n",
+       "      <td>2734.000000</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>0.00000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>50%</th>\n",
+       "      <td>5408.000000</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>0.00000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>75%</th>\n",
+       "      <td>8146.000000</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>1.00000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>max</th>\n",
+       "      <td>10873.000000</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>1.00000</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                  id     keyword location  \\\n",
+       "count    7613.000000        7552     5080   \n",
+       "unique           NaN         221     3341   \n",
+       "top              NaN  fatalities      USA   \n",
+       "freq             NaN          45      104   \n",
+       "mean     5441.934848         NaN      NaN   \n",
+       "std      3137.116090         NaN      NaN   \n",
+       "min         1.000000         NaN      NaN   \n",
+       "25%      2734.000000         NaN      NaN   \n",
+       "50%      5408.000000         NaN      NaN   \n",
+       "75%      8146.000000         NaN      NaN   \n",
+       "max     10873.000000         NaN      NaN   \n",
+       "\n",
+       "                                                     text      target  \n",
+       "count                                                7613  7613.00000  \n",
+       "unique                                               7503         NaN  \n",
+       "top     11-Year-Old Boy Charged With Manslaughter of T...         NaN  \n",
+       "freq                                                   10         NaN  \n",
+       "mean                                                  NaN     0.42966  \n",
+       "std                                                   NaN     0.49506  \n",
+       "min                                                   NaN     0.00000  \n",
+       "25%                                                   NaN     0.00000  \n",
+       "50%                                                   NaN     0.00000  \n",
+       "75%                                                   NaN     1.00000  \n",
+       "max                                                   NaN     1.00000  "
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_train.describe(include='all')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "cc66512c",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-10-10T17:48:37.186556Z",
+     "iopub.status.busy": "2024-10-10T17:48:37.185597Z",
+     "iopub.status.idle": "2024-10-10T17:48:37.216690Z",
+     "shell.execute_reply": "2024-10-10T17:48:37.215471Z"
+    },
+    "papermill": {
+     "duration": 0.039704,
+     "end_time": "2024-10-10T17:48:37.219411",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.179707",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "id     keyword   location                        text                                                                                                                                 target\n",
+       "48     ablaze    Birmingham                      @bbcmtd Wholesale Markets ablaze http://t.co/lHYXEOHY6C                                                                              1         1\n",
+       "7166   mudslide  Chiswick, London                2 great new recipes; mudslide cake and so sorry stew! #GBBO                                                                          0         1\n",
+       "7178   mudslide  Edinburgh                       @hazelannmac ooh now I feel guilty about wishing hatman out. I bet the mudslide was delicious!                                       0         1\n",
+       "7176   mudslide  London                          First impressions: glad hat man is leaving in lieu of more interesting ladies. Hope mudslide lady triumphs next week.                0         1\n",
+       "7174   mudslide  The Pumpkin Carriage of Dreams  @Lolly_Knickers It's a mudslide. \\nIt's like chewing on a rubber tyre.\\nAnd with those I'm DONE.\\n#vaginaorcake #GBBO                1         1\n",
+       "                                                                                                                                                                                               ..\n",
+       "3591   desolate  Pueblo, CO                      @Bill_Roose That looks so desolate and just...depressing                                                                             1         1\n",
+       "3589   desolate  Macclesfield                    @booksbyRoger TY for the follow Go To http://t.co/l9MB2j5pXg BRUTALLY ABUSED+DESOLATE&amp;LOST + HER LOVELY MUM DIES..Is it Murder?  0         1\n",
+       "3587   desolate  Temporary Towers                @fotofill It looks so desolate. End of the world stuff. Gorgeous.                                                                    0         1\n",
+       "3584   desolate  Boulder                         @joshacagan Your only option now is to move to an desolate island with nothing but a stack of DVDs you canÛªt watch.                0         1\n",
+       "10833  wrecked   Lincoln                         @engineshed Great atmosphere at the British Lion gig tonight. Hearing is wrecked. http://t.co/oMNBAtJEAO                             0         1\n",
+       "Name: count, Length: 5080, dtype: int64"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df_train.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a9cafe8c",
+   "metadata": {
+    "papermill": {
+     "duration": 0.00518,
+     "end_time": "2024-10-10T17:48:37.229539",
+     "exception": false,
+     "start_time": "2024-10-10T17:48:37.224359",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 5211014,
+     "sourceId": 49330,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 30786,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.14"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 4.684364,
+   "end_time": "2024-10-10T17:48:37.655384",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2024-10-10T17:48:32.971020",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
