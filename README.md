@@ -1,8 +1,6 @@
 # Disaster Tweets – NLP Classifier
 
 Classify tweets as **“disaster”** vs **“not disaster”** using modern NLP techniques.  
-This project starts from classic ML baselines and extends to **Transformer** and **LLM-based** approaches, with room for deployment as an API or web app.
-
 ---
 
 ## 1. Project Overview
@@ -13,17 +11,11 @@ But not every tweet mentioning *“fire”, “flood”, “explosion”* is act
 **Goal:**  
 Build a model that, given a tweet, predicts whether it is about a **real disaster (1)** or **not (0)**.
 
-Typical use-cases:
-
--  Early-warning signals for emergency teams
--  Social listening for crisis management
--  Filtering noisy social media streams for news agencies
-
 ---
 
-## 2. Dataset & Data Source
+## 2. Dataset
 
-### 2.1 Main Dataset
+### Main Dataset
 
 This project uses the well-known Kaggle competition dataset:
 
