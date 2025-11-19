@@ -1,0 +1,14 @@
+pandas
+numpy
+scikit-learn
+nltk
+tqdm
+matplotlib
+seaborn
+
+# For Transformers (later)
+torch
+transformers
+
+# For notebooks
+jupyter
