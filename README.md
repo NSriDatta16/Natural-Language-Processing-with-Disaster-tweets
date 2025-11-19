@@ -27,4 +27,4 @@ This project uses the well-known Kaggle competition dataset:
   - `keyword` – disaster-related keyword (may be null)  
   - `location` – user-provided location (may be null)  
   - `text` – full tweet text  
-  - `target` – label (1 = real disaster, 0 = not disaster) :contentReference[oaicite:0]{index=0}
+  - `target` – label (1 = real disaster, 0 = not disaster)
